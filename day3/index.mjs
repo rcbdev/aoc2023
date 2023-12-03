@@ -1,5 +1,4 @@
 export default async function run({ inputLines }) {
-  // solution
   const parsed = inputLines.map((line) =>
     line.split("").map((c) => {
       if (c === ".") {
@@ -49,39 +48,32 @@ export default async function run({ inputLines }) {
     handleNumberEnd();
   }
 
-  const partNumbers = numbers.filter((n) => {
-    const min = [n.start[0] - 1, n.start[1] - 1];
-    const max = [n.end[0] + 1, n.end[1] + 1];
-    return symbols.some(
-      (s) =>
-        s.index[0] >= min[0] &&
-        s.index[1] >= min[1] &&
-        s.index[0] <= max[0] &&
-        s.index[1] <= max[1]
-    );
-  });
+  const isAdjacent = (start, end) => {
+    const min = [start[0] - 1, start[1] - 1];
+    const max = [end[0] + 1, end[1] + 1];
+    return (point) =>
+      point[0] >= min[0] &&
+      point[1] >= min[1] &&
+      point[0] <= max[0] &&
+      point[1] <= max[1];
+  };
+
+  const partNumbers = numbers.filter((n) =>
+    symbols.map((s) => s.index).some(isAdjacent(n.start, n.end))
+  );
 
   console.log(partNumbers.map((n) => n.number).reduce((rv, curr) => rv + curr));
 
   const gears = symbols
     .filter((s) => s.symbol === "*")
     .map((g) => {
-      const adjacent = numbers.filter((n) => {
-        const min = [n.start[0] - 1, n.start[1] - 1];
-        const max = [n.end[0] + 1, n.end[1] + 1];
-        return (
-          g.index[0] >= min[0] &&
-          g.index[1] >= min[1] &&
-          g.index[0] <= max[0] &&
-          g.index[1] <= max[1]
-        );
-      });
-      if (adjacent.length !== 2) {
-        return null;
-      }
-      return adjacent.map((n) => n.number).reduce((rv, curr) => rv * curr);
-    })
-    .filter((g) => g !== null);
+      const adjacent = numbers.filter((n) =>
+        isAdjacent(n.start, n.end)(g.index)
+      );
+      return adjacent.length === 2
+        ? adjacent.map((n) => n.number).reduce((rv, curr) => rv * curr)
+        : 0;
+    });
 
   console.log(gears.reduce((rv, curr) => rv + curr));
 }
