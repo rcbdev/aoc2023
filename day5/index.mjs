@@ -30,10 +30,9 @@ export default async function run({ inputLines }) {
     }
     const [dest, source, range] = inputLines[i].split(" ").map((x) => +x);
     currentMap.conversions.push({
-      source,
-      dest,
+      start: source,
+      end: source + range - 1,
       func: (input) => input + (dest - source),
-      range,
     });
   }
   saveMap();
@@ -45,7 +44,7 @@ export default async function run({ inputLines }) {
   while ((map = maps.find((m) => m.from === currentType))) {
     currentValues = currentValues.map((v) => {
       const conversion = map.conversions.find(
-        (c) => c.source <= v && c.source + c.range > v
+        (c) => c.start <= v && c.end >= v
       );
       return conversion ? conversion.func(v) : v;
     });
@@ -59,34 +58,34 @@ export default async function run({ inputLines }) {
   for (let i = 0; i < seeds.length; i += 2) {
     seedRanges.push({
       start: seeds[i],
-      length: seeds[i + 1],
+      end: seeds[i] + seeds[i + 1] - 1,
     });
   }
 
   currentType = "seed";
   let currentRanges = [...seedRanges];
+  const noConversion = (x) => x;
 
   const fillGaps = (ranges, min, max) => {
     const sorted = [...ranges].sort((a, b) => a.start - b.start);
     let current = min;
     const all = sorted.flatMap((range) => {
-      if (range.start === current) {
-        current = range.start + range.length;
-        return [range];
-      }
-      const gap = {
-        start: current,
-        length: range.start - current,
-        conversion: (x) => x,
-      };
-      current = range.start + range.length;
-      return [gap, range];
+      const gap =
+        range.start !== current
+          ? {
+              start: current,
+              end: range.start - 1,
+              conversion: noConversion,
+            }
+          : null;
+      current = range.end + 1;
+      return [gap, range].filter(Boolean);
     });
     if (current <= max) {
       all.push({
         start: current,
-        length: max - current + 1,
-        conversion: (x) => x,
+        end: max,
+        conversion: noConversion,
       });
     }
     return all;
@@ -95,25 +94,23 @@ export default async function run({ inputLines }) {
   while ((map = maps.find((m) => m.from === currentType))) {
     currentRanges = currentRanges.flatMap((r) => {
       const min = r.start;
-      const max = r.start + r.length - 1;
+      const max = r.end;
       const conversions = map.conversions.filter(
-        (c) => c.source + c.range > min && c.source <= max
+        (c) => c.end >= min && c.start <= max
       );
       const ranges = conversions.map((c) => {
-        const start = Math.max(c.source, min);
-        const end = Math.min(c.source + c.range - 1, max);
+        const start = Math.max(c.start, min);
+        const end = Math.min(c.end, max);
         return {
           start,
-          length: end - start + 1,
+          end,
           conversion: c.func,
         };
       });
 
-      const allRanges = fillGaps(ranges, min, max);
-
-      return allRanges.map((r) => ({
+      return fillGaps(ranges, min, max).map((r) => ({
         start: r.conversion(r.start),
-        length: r.length,
+        end: r.conversion(r.end),
       }));
     });
     currentType = map.to;
