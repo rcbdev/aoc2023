@@ -1,5 +1,4 @@
 export default async function run({ inputLines }) {
-  // solution
   const seeds = inputLines[0]
     .split(":")[1]
     .trim()
