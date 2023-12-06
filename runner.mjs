@@ -11,6 +11,8 @@ const inputLines = inputText.split(/\r?\n/);
 
 const solution = await import(`./${day}/index.mjs`);
 
+console.log = process._rawDebug;
+
 console.time("execution time");
 await solution.default({
   inputText,
