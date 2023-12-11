@@ -83,22 +83,18 @@ export default async function run({ inputLines }) {
 
   console.log(moves);
 
-  const expandedMap = new Array(map.length * 2 + 2)
-    .fill(0)
-    .map(() => new Array(map[0].length * 2 + 2).fill(0));
-
-  const markIfEmpty = (a, b) => {
-    if (expandedMap[a][b] === 0) {
-      expandedMap[a][b] = 1;
+  const expandedMap = new Array(map.length * 2 + 2).fill(0).map((_, i) => {
+    if (i % 2 === 0) {
+      return new Array(map[0].length * 2 + 2).fill(1);
     }
-  };
+    return new Array(map[0].length * 2 + 2)
+      .fill(0)
+      .map((_, j) => (j % 2 === 0 ? 1 : 0));
+  });
 
   for (let i = 0; i < visitedIndexes.length; i++) {
     const index = visitedIndexes[i];
     expandedMap[index[0] * 2 + 1][index[1] * 2 + 1] = "X";
-    markIfEmpty(index[0] * 2 + 2, index[1] * 2 + 1);
-    markIfEmpty(index[0] * 2 + 1, index[1] * 2 + 2);
-    markIfEmpty(index[0] * 2 + 2, index[1] * 2 + 2);
     if (i === visitedIndexes.length - 1) {
       continue;
     }
@@ -110,10 +106,6 @@ export default async function run({ inputLines }) {
       const a = index[0] + paired[0] + 1;
       const b = index[1] + paired[1] + 1;
       expandedMap[a][b] = "X";
-      markIfEmpty(a + 1, b);
-      markIfEmpty(a, b + 1);
-      markIfEmpty(a + 1, b);
-      markIfEmpty(a + 1, b + 1);
     });
   }
 
@@ -141,5 +133,5 @@ export default async function run({ inputLines }) {
     queue.push([index[0], index[1] + 1]);
   }
 
-  console.log(expandedMap.flatMap((x) => x).filter((x) => x === 0).length / 4);
+  console.log(expandedMap.flatMap((x) => x).filter((x) => x === 0).length);
 }
