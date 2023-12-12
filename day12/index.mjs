@@ -29,8 +29,9 @@ export default async function run({ inputLines }) {
         countsUpTo[group][character] = count;
       };
 
+      let currStart = 0;
       for (let i = 0; i < groups.length; i++) {
-        for (let j = 0; j < row.length; j++) {
+        for (let j = currStart; j < row.length; j++) {
           let count = 0;
           if (row[j] !== "#") {
             count += getCountsUpTo(i, j - 1);
@@ -46,6 +47,7 @@ export default async function run({ inputLines }) {
           }
           recordCountsUpTo(i, j, count);
         }
+        currStart += groups[i] + 1;
       }
 
       return getCountsUpTo(groups.length - 1, row.length - 1);
