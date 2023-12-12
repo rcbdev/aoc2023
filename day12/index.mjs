@@ -31,6 +31,7 @@ export default async function run({ inputLines }) {
 
       let currStart = 0;
       for (let i = 0; i < groups.length; i++) {
+        currStart += groups[i] + 1;
         for (let j = currStart; j < row.length; j++) {
           let count = 0;
           if (row[j] !== "#") {
@@ -47,7 +48,6 @@ export default async function run({ inputLines }) {
           }
           recordCountsUpTo(i, j, count);
         }
-        currStart += groups[i] + 1;
       }
 
       return getCountsUpTo(groups.length - 1, row.length - 1);
