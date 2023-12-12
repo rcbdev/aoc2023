@@ -10,20 +10,24 @@ export default async function run({ inputLines }) {
   const countOptions = (lines) =>
     lines.map(({ groups, row: rawRow }) => {
       const row = "." + rawRow + ".";
-      const countsUpTo = {};
-      const getCountsUpTo = (group, character) =>
-        countsUpTo[`${group}-${character}`] ?? 0;
-      const recordCountsUpTo = (group, character, count) => {
-        countsUpTo[`${group}-${character}`] = count;
-      };
+      const countsUpTo = new Array(groups.length + 1)
+        .fill(0)
+        .map(() => new Array(row.length).fill(0));
 
       let firstHash = row.indexOf("#");
       if (firstHash === -1) {
         firstHash = row.length;
       }
-      for (let i = 0; i < firstHash; i++) {
-        recordCountsUpTo(-1, i, 1);
-      }
+
+      const getCountsUpTo = (group, character) => {
+        if (group === -1) {
+          return character > -1 && character < firstHash ? 1 : 0;
+        }
+        return countsUpTo[group][character] ?? 0;
+      };
+      const recordCountsUpTo = (group, character, count) => {
+        countsUpTo[group][character] = count;
+      };
 
       for (let i = 0; i < groups.length; i++) {
         for (let j = 0; j < row.length; j++) {
