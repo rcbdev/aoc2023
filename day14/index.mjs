@@ -79,10 +79,8 @@ export default async function run({ inputLines }) {
     const testMap = (map) => {
       const transposed = transpose(map);
       const drawnMap = transposed.map((l) => l.join("")).join("\n");
-      if (seen.includes(drawnMap) && repeatStart === -1) {
-        repeatStart = seen.length;
-      }
-      if (seen.filter((x) => x === drawnMap).length === 2) {
+      if (seen.includes(drawnMap)) {
+        repeatStart = seen.indexOf(drawnMap);
         return true;
       }
       seen.push(drawnMap);
