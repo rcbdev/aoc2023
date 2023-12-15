@@ -10,30 +10,24 @@ export default async function run({ inputLines }) {
 
   console.log(stepHashes.reduce((rv, curr) => rv + curr));
 
-  const boxes = new Array(256).fill(null).map(() => []);
+  const boxes = new Array(256).fill(null).map(() => new Map());
 
   for (let i = 0; i < steps.length; i++) {
     const label = steps[i].match(/\w+/)[0];
     const instruction = steps[i].match(/-|=/)[0];
-    const boxIdx = hash(label);
-    const box = boxes[boxIdx];
-    const idx = box.findIndex((x) => x[0] === label);
+    const box = boxes[hash(label)];
 
     if (instruction === "=") {
       const power = +steps[i].split(instruction)[1];
-      if (idx === -1) {
-        box.push([label, power]);
-      } else {
-        box[idx][1] = power;
-      }
-    } else if (idx !== -1) {
-      boxes[boxIdx] = [...box.slice(0, idx), ...box.slice(idx + 1)];
+      box.set(label, power);
+    } else {
+      box.delete(label);
     }
   }
 
   const boxPower = (box, boxNumber) =>
-    box.reduce(
-      (rv, curr, idx) => (boxNumber + 1) * (idx + 1) * curr[1] + rv,
+    Array.from(box.values()).reduce(
+      (rv, curr, idx) => (boxNumber + 1) * (idx + 1) * curr + rv,
       0
     );
 
