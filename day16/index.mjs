@@ -39,33 +39,34 @@ export default async function run({ inputLines }) {
   };
   const moveMap = map.map((l) => l.map((x) => moves[x]));
 
-  const x = map[0].length;
-  const y = map.length;
   const isInMap = ({ loc }) =>
-    loc[0] >= 0 && loc[0] < y && loc[1] >= 0 && loc[1] < x;
-  const seenKey = (beam) =>
-    beam.loc[0] * (7 * x + 1) +
-    beam.loc[1] * 7 +
-    (beam.dir[0] + 1) * 3 +
-    (beam.dir[1] + 1);
+    loc[0] >= 0 && loc[0] < map.length && loc[1] >= 0 && loc[1] < map[0].length;
+  const dirIndex = ({ dir }) => {
+    if (dir[0] === -1) {
+      return 0;
+    }
+    if (dir[0] === 1) {
+      return 1;
+    }
+    if (dir[1] === -1) {
+      return 2;
+    }
+    return 3;
+  };
 
   const testBeam = (start) => {
-    const visitedMap = map.map((l) => l.map(() => 0));
-    const seen = new Set();
-
+    const visited = map.map((l) => l.map(() => [0, 0, 0, 0]));
     const next = (beam) => {
-      const key = seenKey(beam);
-      if (isInMap(beam) && !seen.has(key)) {
-        seen.add(key);
-        visitedMap[beam.loc[0]][beam.loc[1]] = 1;
+      const idx = dirIndex(beam);
+      if (isInMap(beam) && !visited[beam.loc[0]][beam.loc[1]][idx]) {
+        visited[beam.loc[0]][beam.loc[1]][idx] = 1;
         moveMap[beam.loc[0]][beam.loc[1]](beam, next);
       }
     };
-
     next(start);
 
-    return visitedMap
-      .map((l) => l.reduce((a, b) => a + b))
+    return visited
+      .map((l) => l.reduce((a, b) => +b.includes(1) + a, 0))
       .reduce((a, b) => a + b);
   };
 
