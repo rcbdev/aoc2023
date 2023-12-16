@@ -40,16 +40,19 @@ export default async function run({ inputLines }) {
     loc[0] >= 0 && loc[0] < map.length && loc[1] >= 0 && loc[1] < map[0].length;
   const seenKey = (beam) =>
     `${beam.loc[0]}-${beam.loc[1]}-${beam.dir[0]}-${beam.dir[1]}`;
-
-  const handleBeam = (beam, visitedMap, seen) => {
-    if (!isInMap(beam)) {
-      return;
-    }
+  const hasBeenSeen = (beam, seen) => {
     const key = seenKey(beam);
     if (seen.has(key)) {
-      return;
+      return true;
     }
     seen.add(key);
+    return false;
+  };
+
+  const handleBeam = (beam, visitedMap, seen) => {
+    if (!isInMap(beam) || hasBeenSeen(beam, seen)) {
+      return;
+    }
 
     const char = map[beam.loc[0]][beam.loc[1]];
     visitedMap[beam.loc[0]][beam.loc[1]] = 1;
@@ -70,16 +73,15 @@ export default async function run({ inputLines }) {
   };
 
   const testBeam = (start) => {
-    if (!isInMap(start)) {
-      return 0;
-    }
-
     const visitedMap = map.map((l) => l.map(() => 0));
     const seen = new Set();
 
     handleBeam(start, visitedMap, seen);
 
-    return visitedMap.flatMap((x) => x).reduce((rv, curr) => rv + curr);
+    return visitedMap.reduce(
+      (rv, curr) => rv + curr.reduce((a, b) => a + b),
+      0
+    );
   };
 
   console.log(testBeam({ loc: [0, 0], dir: [0, 1] }));
