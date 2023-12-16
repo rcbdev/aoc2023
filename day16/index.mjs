@@ -36,10 +36,15 @@ export default async function run({ inputLines }) {
     }
     return newDirs.map((d) => moveInDir({ loc, dir: d }));
   };
+  const x = map[0].length;
+  const y = map.length;
   const isInMap = ({ loc }) =>
-    loc[0] >= 0 && loc[0] < map.length && loc[1] >= 0 && loc[1] < map[0].length;
+    loc[0] >= 0 && loc[0] < y && loc[1] >= 0 && loc[1] < x;
   const seenKey = (beam) =>
-    `${beam.loc[0]}-${beam.loc[1]}-${beam.dir[0]}-${beam.dir[1]}`;
+    beam.loc[0] * (7 * x + 1) +
+    beam.loc[1] * 7 +
+    (beam.dir[0] + 1) * 3 +
+    (beam.dir[1] + 1);
   const hasBeenSeen = (seen) => (beam) => {
     const key = seenKey(beam);
     if (seen.has(key)) {
