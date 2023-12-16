@@ -40,7 +40,7 @@ export default async function run({ inputLines }) {
     loc[0] >= 0 && loc[0] < map.length && loc[1] >= 0 && loc[1] < map[0].length;
   const seenKey = (beam) =>
     `${beam.loc[0]}-${beam.loc[1]}-${beam.dir[0]}-${beam.dir[1]}`;
-  const hasBeenSeen = (beam, seen) => {
+  const hasBeenSeen = (seen) => (beam) => {
     const key = seenKey(beam);
     if (seen.has(key)) {
       return true;
@@ -50,7 +50,7 @@ export default async function run({ inputLines }) {
   };
 
   const handleBeam = (beam, visitedMap, seen) => {
-    if (!isInMap(beam) || hasBeenSeen(beam, seen)) {
+    if (!isInMap(beam) || seen(beam)) {
       return;
     }
 
@@ -74,9 +74,8 @@ export default async function run({ inputLines }) {
 
   const testBeam = (start) => {
     const visitedMap = map.map((l) => l.map(() => 0));
-    const seen = new Set();
 
-    handleBeam(start, visitedMap, seen);
+    handleBeam(start, visitedMap, hasBeenSeen(new Set()));
 
     return visitedMap.reduce(
       (rv, curr) => rv + curr.reduce((a, b) => a + b),
