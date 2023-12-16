@@ -38,50 +38,46 @@ export default async function run({ inputLines }) {
   };
   const isInMap = ({ loc }) =>
     loc[0] >= 0 && loc[0] < map.length && loc[1] >= 0 && loc[1] < map[0].length;
+  const seenKey = (beam) =>
+    `${beam.loc[0]}-${beam.loc[1]}-${beam.dir[0]}-${beam.dir[1]}`;
+
+  const handleBeam = (beam, visitedMap, seen) => {
+    if (!isInMap(beam)) {
+      return;
+    }
+    const key = seenKey(beam);
+    if (seen.includes(key)) {
+      return;
+    }
+    seen.push(key);
+
+    const char = map[beam.loc[0]][beam.loc[1]];
+    visitedMap[beam.loc[0]][beam.loc[1]] = 1;
+
+    if (char === "\\" || char === "/") {
+      handleBeam(bounceBeam(beam, char), visitedMap, seen);
+      return;
+    }
+    if (char === "-" || char === "|") {
+      const beams = splitBeam(beam, char);
+      handleBeam(beams[0], visitedMap, seen);
+      if (beams[1]) {
+        handleBeam(beams[1], visitedMap, seen);
+      }
+      return;
+    }
+    handleBeam(moveInDir(beam), visitedMap, seen);
+  };
 
   const testBeam = (start) => {
     if (!isInMap(start)) {
       return 0;
     }
 
-    let beams = [start];
     const visitedMap = map.map((l) => l.map(() => 0));
-    const seenKey = (beam) =>
-      `${beam.loc[0]}-${beam.loc[1]}-${beam.dir[0]}-${beam.dir[1]}`;
-    const seen = [seenKey(start)];
-    const isNew = (beam) => {
-      const key = seenKey(beam);
-      if (seen.includes(key)) {
-        return false;
-      }
-      seen.push(key);
-      return true;
-    };
+    const seen = [];
 
-    while (beams.length > 0) {
-      const nextBeams = [];
-      const addBeam = (beam) => {
-        if (isInMap(beam) && isNew(beam)) {
-          nextBeams.push(beam);
-        }
-      };
-      for (let i = 0; i < beams.length; i++) {
-        const beam = beams[i];
-        const char = map[beam.loc[0]][beam.loc[1]];
-        visitedMap[beam.loc[0]][beam.loc[1]] = 1;
-
-        if (char === "\\" || char === "/") {
-          addBeam(bounceBeam(beam, char));
-          continue;
-        }
-        if (char === "-" || char === "|") {
-          splitBeam(beam, char).forEach(addBeam);
-          continue;
-        }
-        addBeam(moveInDir(beam));
-      }
-      beams = nextBeams;
-    }
+    handleBeam(start, visitedMap, seen);
 
     return visitedMap.flatMap((x) => x).reduce((rv, curr) => rv + curr);
   };
