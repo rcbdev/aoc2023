@@ -46,10 +46,10 @@ export default async function run({ inputLines }) {
       return;
     }
     const key = seenKey(beam);
-    if (seen.includes(key)) {
+    if (seen.has(key)) {
       return;
     }
-    seen.push(key);
+    seen.add(key);
 
     const char = map[beam.loc[0]][beam.loc[1]];
     visitedMap[beam.loc[0]][beam.loc[1]] = 1;
@@ -75,7 +75,7 @@ export default async function run({ inputLines }) {
     }
 
     const visitedMap = map.map((l) => l.map(() => 0));
-    const seen = [];
+    const seen = new Set();
 
     handleBeam(start, visitedMap, seen);
 
