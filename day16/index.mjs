@@ -1,41 +1,44 @@
 export default async function run({ inputLines }) {
   const map = inputLines.map((l) => l.split(""));
 
-  const moveInDir = ({ loc, dir }) => {
-    const newLoc = [loc[0] + dir[0], loc[1] + dir[1]];
-    return {
-      loc: newLoc,
+  const moveInDir = ({ loc, dir }, next) => {
+    next({
+      loc: [loc[0] + dir[0], loc[1] + dir[1]],
       dir,
-    };
+    });
   };
-  const bounceBeam = ({ loc, dir }, mirror) => {
-    const newDir =
-      mirror === "\\" ? [dir[1], dir[0]] : [-1 * dir[1], -1 * dir[0]];
-    return moveInDir({ loc, dir: newDir });
+  const bounceUpLeft = ({ loc, dir }, next) => {
+    moveInDir({ loc, dir: [dir[1], dir[0]] }, next);
   };
-  const splitBeam = ({ loc, dir }, splitter) => {
-    let newDirs = [];
-    if (splitter === "|") {
-      if (dir[0] === 0) {
-        newDirs = [
-          [1, 0],
-          [-1, 0],
-        ];
-      } else {
-        newDirs = [dir];
-      }
-    } else {
-      if (dir[1] === 0) {
-        newDirs = [
-          [0, 1],
-          [0, -1],
-        ];
-      } else {
-        newDirs = [dir];
-      }
+  const bounceUpRight = ({ loc, dir }, next) => {
+    moveInDir({ loc, dir: [-1 * dir[1], -1 * dir[0]] }, next);
+  };
+  const splitVertical = ({ loc, dir }, next) => {
+    if (dir[0] === 0) {
+      moveInDir({ loc, dir: [1, 0] }, next);
+      moveInDir({ loc, dir: [-1, 0] }, next);
+      return;
     }
-    return newDirs.map((d) => moveInDir({ loc, dir: d }));
+    moveInDir({ loc, dir }, next);
   };
+  const splitHorizontal = ({ loc, dir }, next) => {
+    if (dir[1] === 0) {
+      moveInDir({ loc, dir: [0, 1] }, next);
+      moveInDir({ loc, dir: [0, -1] }, next);
+      return;
+    }
+    moveInDir({ loc, dir }, next);
+  };
+
+  const moves = {
+    ".": moveInDir,
+    "/": bounceUpRight,
+    "\\": bounceUpLeft,
+    "-": splitHorizontal,
+    "|": splitVertical,
+  };
+  const moveMap = map.map((l) => l.map((x) => moves[x]));
+
   const x = map[0].length;
   const y = map.length;
   const isInMap = ({ loc }) =>
@@ -45,41 +48,21 @@ export default async function run({ inputLines }) {
     beam.loc[1] * 7 +
     (beam.dir[0] + 1) * 3 +
     (beam.dir[1] + 1);
-  const hasBeenSeen = (seen) => (beam) => {
-    const key = seenKey(beam);
-    if (seen.has(key)) {
-      return true;
-    }
-    seen.add(key);
-    return false;
-  };
-
-  const handleBeam = (beam, visitedMap, seen) => {
-    if (!isInMap(beam) || seen(beam)) {
-      return;
-    }
-
-    const char = map[beam.loc[0]][beam.loc[1]];
-    visitedMap[beam.loc[0]][beam.loc[1]] = 1;
-
-    if (char === "\\" || char === "/") {
-      handleBeam(bounceBeam(beam, char), visitedMap, seen);
-      return;
-    }
-    if (char === "-" || char === "|") {
-      const beams = splitBeam(beam, char);
-      handleBeam(beams[0], visitedMap, seen);
-      if (beams[1]) {
-        handleBeam(beams[1], visitedMap, seen);
-      }
-      return;
-    }
-    handleBeam(moveInDir(beam), visitedMap, seen);
-  };
 
   const testBeam = (start) => {
     const visitedMap = map.map((l) => l.map(() => 0));
-    handleBeam(start, visitedMap, hasBeenSeen(new Set()));
+    const seen = new Set();
+
+    const next = (beam) => {
+      const key = seenKey(beam);
+      if (isInMap(beam) && !seen.has(key)) {
+        seen.add(key);
+        visitedMap[beam.loc[0]][beam.loc[1]] = 1;
+        moveMap[beam.loc[0]][beam.loc[1]](beam, next);
+      }
+    };
+
+    next(start);
 
     return visitedMap
       .map((l) => l.reduce((a, b) => a + b))
