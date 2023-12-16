@@ -74,13 +74,11 @@ export default async function run({ inputLines }) {
 
   const testBeam = (start) => {
     const visitedMap = map.map((l) => l.map(() => 0));
-
     handleBeam(start, visitedMap, hasBeenSeen(new Set()));
 
-    return visitedMap.reduce(
-      (rv, curr) => rv + curr.reduce((a, b) => a + b),
-      0
-    );
+    return visitedMap
+      .map((l) => l.reduce((a, b) => a + b))
+      .reduce((a, b) => a + b);
   };
 
   console.log(testBeam({ loc: [0, 0], dir: [0, 1] }));
