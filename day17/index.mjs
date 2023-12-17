@@ -9,8 +9,18 @@ export default async function run({ inputLines }) {
     [1, 0],
     [-1, 0],
   ];
-  const directionIndex = (direction) =>
-    directions.findIndex((x) => x[0] == direction[0] && x[1] === direction[1]);
+  const directionIndex = (direction) => {
+    if (direction[0] === 0) {
+      if (direction[1] === 1) {
+        return 0;
+      }
+      return 1;
+    }
+    if (direction[0] === 1) {
+      return 2;
+    }
+    return 3;
+  };
   const isInMap = (coord) =>
     coord[0] >= 0 &&
     coord[0] < map.length &&
@@ -25,15 +35,14 @@ export default async function run({ inputLines }) {
     let newDirections =
       currentDistance > 0 && currentDistance < minInDir
         ? [currentDirection]
-        : directions;
+        : directions.filter(
+            (x) =>
+              !(
+                x[0] * -1 === currentDirection[0] &&
+                x[1] * -1 === currentDirection[1]
+              )
+          );
     return newDirections
-      .filter(
-        (x) =>
-          !(
-            x[0] * -1 === currentDirection[0] &&
-            x[1] * -1 === currentDirection[1]
-          )
-      )
       .map((d) => {
         const newCoord = [coord[0] + d[0], coord[1] + d[1]];
         if (!isInMap(newCoord)) {
@@ -67,10 +76,10 @@ export default async function run({ inputLines }) {
   const findBestPath = (maxInDir = 3, minInDir = 0) => {
     const visited = map.map((l) =>
       l.map(() => [
-        [0, 0, 0],
-        [0, 0, 0],
-        [0, 0, 0],
-        [0, 0, 0],
+        new Array(maxInDir).fill(0),
+        new Array(maxInDir).fill(0),
+        new Array(maxInDir).fill(0),
+        new Array(maxInDir).fill(0),
       ])
     );
 
