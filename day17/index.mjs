@@ -27,7 +27,7 @@ export default async function run({ inputLines }) {
     coord[1] >= 0 &&
     coord[1] < map[0].length;
   const getNeighbours = (
-    { from, coord, currentDirection, currentDistance, heat },
+    { coord, currentDirection, currentDistance, heat },
     maxInDir,
     minInDir,
     visited
