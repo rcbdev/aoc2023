@@ -27,31 +27,34 @@ export default async function run({ inputLines }) {
     coord[1] >= 0 &&
     coord[1] < map[0].length;
   const getNeighbours = (
-    { coord, currentDirection, currentDistance, heat },
+    { from, coord, currentDirection, currentDistance, heat },
     maxInDir,
     minInDir,
     visited
   ) => {
-    let newDirections =
-      currentDistance > 0 && currentDistance < minInDir
-        ? [currentDirection]
-        : directions.filter(
-            (x) =>
-              !(
-                x[0] * -1 === currentDirection[0] &&
-                x[1] * -1 === currentDirection[1]
-              )
-          );
+    let newDirections = directions.filter(
+      (x) =>
+        !(
+          x[0] * -1 === currentDirection[0] && x[1] * -1 === currentDirection[1]
+        )
+    );
     return newDirections
       .map((d) => {
-        const newCoord = [coord[0] + d[0], coord[1] + d[1]];
+        const multiple =
+          d[0] === currentDirection[0] && d[1] === currentDirection[1]
+            ? 1
+            : minInDir;
+        const newCoord = [
+          coord[0] + d[0] * multiple,
+          coord[1] + d[1] * multiple,
+        ];
         if (!isInMap(newCoord)) {
           return null;
         }
         const distance =
           d[0] === currentDirection[0] && d[1] === currentDirection[1]
             ? currentDistance + 1
-            : 1;
+            : multiple;
         if (distance > maxInDir) {
           return null;
         }
@@ -59,12 +62,16 @@ export default async function run({ inputLines }) {
           return null;
         }
         visited[newCoord[0]][newCoord[1]][directionIndex(d)][distance] = 1;
+        let newHeat = heat + map[newCoord[0]][newCoord[1]];
+        for (let i = 1; i < multiple; i++) {
+          newHeat += map[coord[0] + d[0] * i][coord[1] + d[1] * i];
+        }
 
         return {
           coord: newCoord,
           currentDirection: d,
           currentDistance: distance,
-          heat: heat + map[newCoord[0]][newCoord[1]],
+          heat: newHeat,
         };
       })
       .filter((x) => x !== null);
@@ -73,7 +80,7 @@ export default async function run({ inputLines }) {
   const target = [map.length - 1, map[0].length - 1];
   const isTarget = (coord) => coord[0] === target[0] && coord[1] === target[1];
 
-  const findBestPath = (maxInDir = 3, minInDir = 0) => {
+  const findBestPath = (maxInDir = 3, minInDir = 1) => {
     const visited = map.map((l) =>
       l.map(() => [
         new Array(maxInDir).fill(0),
