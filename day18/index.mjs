@@ -35,7 +35,7 @@ export default async function run({ inputLines }) {
       ];
 
       addArea(prev, position);
-      perimeter += distance;
+      perimeter += distance / 2;
     }
     addArea(position, [0, 0]);
 
