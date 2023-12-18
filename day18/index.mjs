@@ -18,31 +18,26 @@ export default async function run({ inputLines }) {
     L: [0, -1],
   };
   const calculateArea = (instructions) => {
-    const vertices = [];
     let position = [0, 0];
+    let areaInside = 0;
+    let perimeter = 1;
 
-    for (let i = 0; i < instructions.length; i++) {
-      const { direction, distance } = instructions[i];
+    const addArea = (a, b) => {
+      areaInside += a[1] * b[0] * 0.5;
+      areaInside -= b[1] * a[0] * 0.5;
+    };
+
+    for (const { direction, distance } of instructions) {
+      const prev = position;
       position = [
         position[0] + directions[direction][0] * distance,
         position[1] + directions[direction][1] * distance,
       ];
-      vertices.push(position);
+
+      addArea(prev, position);
+      perimeter += distance;
     }
-
-    let areaInside = 0;
-    for (let i = 0; i < vertices.length; i++) {
-      var addX = vertices[i][1];
-      var addY = vertices[(i + 1) % vertices.length][0];
-      var subX = vertices[(i + 1) % vertices.length][1];
-      var subY = vertices[i][0];
-
-      areaInside += addX * addY * 0.5;
-      areaInside -= subX * subY * 0.5;
-    }
-
-    const perimeter =
-      instructions.reduce((rv, curr) => rv + curr.distance / 2, 0) + 1;
+    addArea(position, [0, 0]);
 
     return Math.abs(areaInside) + perimeter;
   };
