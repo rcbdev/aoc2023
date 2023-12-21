@@ -1,8 +1,8 @@
 export default async function run({ inputLines }) {
   const gardenMap = inputLines.map((l) => l.split(""));
 
-  const even = gardenMap.map((l) => l.map(() => new Set()));
-  const odd = gardenMap.map((l) => l.map(() => new Set()));
+  let even = gardenMap.map((l) => l.map(() => new Set()));
+  let odd = gardenMap.map((l) => l.map(() => new Set()));
 
   const isValid = (coord) => {
     return gardenMap[coord[0]][coord[1]] !== "#";
@@ -69,34 +69,51 @@ export default async function run({ inputLines }) {
     return next;
   };
 
-  const start = gardenMap
-    .flatMap((l, i) => l.map((x, j) => (x === "S" ? [i, j] : null)))
-    .filter((x) => x !== null)[0];
-  let newCoords = [[start, [0, 0]]];
-  even[start[0]][start[1]].add([0, 0].join(","));
-  const loops = [];
-  const loopCounts = [];
-  const offsetCounts = [];
-  for (let i = 0; i < 1000; i++) {
-    newCoords = makeAStep(newCoords, i % 2 === 1);
-    if (newCoords.some((c) => c[0][0] === start[0] && c[0][1] === start[1])) {
-      loops.push(i + 1);
-      loopCounts.push(
-        (i % 2 === 1 ? even : odd)
-          .map((l) => l.reduce((a, b) => a + b.size, 0))
-          .reduce((a, b) => a + b)
-      );
+  const run = (offset = 0, count = 1) => {
+    even = gardenMap.map((l) => l.map(() => new Set()));
+    odd = gardenMap.map((l) => l.map(() => new Set()));
+    const start = gardenMap
+      .flatMap((l, i) => l.map((x, j) => (x === "S" ? [i, j] : null)))
+      .filter((x) => x !== null)[0];
+    let newCoords = [[start, [0, 0]]];
+    even[start[0]][start[1]].add([0, 0].join(","));
+    const loops = [];
+    const offsetCounts = [];
+    let i = 0;
+    while (offsetCounts.length < count) {
+      newCoords = makeAStep(newCoords, i % 2 === 1);
+      i++;
+      if (newCoords.some((c) => c[0][0] === start[0] && c[0][1] === start[1])) {
+        loops.push(i);
+      }
+      if (i === loops.at(-1) + offset) {
+        offsetCounts.push(
+          (i % 2 === 0 ? even : odd)
+            .map((l) => l.reduce((a, b) => a + b.size, 0))
+            .reduce((a, b) => a + b)
+        );
+      }
     }
-    if (i === loops.at(-1) - 1 + 65) {
-      offsetCounts.push(
-        (i % 2 === 1 ? even : odd)
-          .map((l) => l.reduce((a, b) => a + b.size, 0))
-          .reduce((a, b) => a + b)
-      );
-    }
-  }
-  console.log(loops);
-  console.log(loopCounts);
-  // Use these to find a quadratic equation for counts at the loop + offset we need
-  console.log(offsetCounts);
+    return [loops, offsetCounts];
+  };
+  const [loops] = run();
+  const stepCount = 26501365;
+  const offset = stepCount % loops[0];
+
+  const [_, offsetCounts] = run(offset, 3);
+  const a =
+    offsetCounts[0] / ((1 - 2) * (1 - 3)) +
+    offsetCounts[1] / ((2 - 1) * (2 - 3)) +
+    offsetCounts[2] / ((3 - 1) * (3 - 2));
+  const b =
+    (-offsetCounts[0] * (2 + 3)) / ((1 - 2) * (1 - 3)) -
+    (offsetCounts[1] * (1 + 3)) / ((2 - 1) * (2 - 3)) -
+    (offsetCounts[2] * (1 + 2)) / ((3 - 1) * (3 - 2));
+  const c =
+    (offsetCounts[0] * 2 * 3) / ((1 - 2) * (1 - 3)) +
+    (offsetCounts[1] * 1 * 3) / ((2 - 1) * (2 - 3)) +
+    (offsetCounts[2] * 1 * 2) / ((3 - 1) * (3 - 2));
+
+  const loopsForAnswer = Math.floor(26501365 / loops[0]);
+  console.log(a * loopsForAnswer * loopsForAnswer + b * loopsForAnswer + c);
 }
