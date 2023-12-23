@@ -4,6 +4,10 @@ export default async function run({ inputLines }) {
   const start = [0, 1];
   const end = [map.length - 1, map[0].length - 2];
 
+  const getKey = (arr) => arr.join("-");
+  const startNode = getKey(start);
+  const endNode = getKey(end);
+
   const isValid = (tile) => {
     if (
       tile[0] < 0 ||
@@ -22,7 +26,6 @@ export default async function run({ inputLines }) {
     [tile[0], tile[1] - 1],
     [tile[0], tile[1] + 1],
   ];
-  const getKey = (arr) => arr.join("-");
 
   const makeNodeMap = (point = start) => {
     const node = [];
@@ -46,7 +49,9 @@ export default async function run({ inputLines }) {
       }
       node.push({ length, point: getKey(lastPoint) });
     }
-    nodeMap[getKey(point)] = node;
+    nodeMap[getKey(point)] = node.sort((a, b) =>
+      a.point === endNode ? -1 : b.point === endNode ? 1 : 0
+    );
 
     const newNodes = node
       .map((path) => path.point)
@@ -56,11 +61,8 @@ export default async function run({ inputLines }) {
       makeNodeMap(newNode.split("-").map((x) => +x))
     );
   };
-
   makeNodeMap();
 
-  const startNode = getKey(start);
-  const endNode = getKey(end);
   const nodeKeys = Object.keys(nodeMap);
   const nodeBitmaps = Object.fromEntries(
     nodeKeys.map((k, i) => [k, BigInt(Math.pow(2, i))])
@@ -71,6 +73,31 @@ export default async function run({ inputLines }) {
   const markVisited = (node, visited) => {
     return visited | nodeBitmaps[node];
   };
+
+  const layers = {};
+  const makeLayers = (nodes = [endNode], currentLayers = [[endNode]]) => {
+    if (nodes.length === 0) {
+      return;
+    }
+    nodes.forEach((node) => {
+      layers[node] = currentLayers[0].reduce(
+        (rv, curr) => markVisited(curr, rv),
+        0n
+      );
+    });
+    currentLayers = [nodes, ...currentLayers];
+    const seen = currentLayers.flatMap((l) => l);
+    const nextLayer = Array.from(
+      new Set(
+        nodes
+          .flatMap((n) => nodeMap[n].map((x) => x.point))
+          .filter((n) => !seen.includes(n))
+      )
+    );
+    makeLayers(nextLayer, currentLayers);
+  };
+  makeLayers();
+
   const paths = [];
   paths.push({
     length: 0,
@@ -82,16 +109,19 @@ export default async function run({ inputLines }) {
 
   while (paths.length > 0) {
     const next = paths.pop();
-    if (next.point === endNode) {
-      length = Math.max(length, next.length);
-      continue;
-    }
     const options = nodeMap[next.point];
     for (let i = 0; i < options.length; i++) {
       const option = options[i];
       const point = option.point;
       if (hasVisited(point, next.visited)) {
         continue;
+      }
+      if ((layers[point] & next.visited) === layers[point]) {
+        continue;
+      }
+      if (point === endNode) {
+        length = Math.max(length, next.length + option.length);
+        break;
       }
       paths.push({
         length: next.length + option.length,
