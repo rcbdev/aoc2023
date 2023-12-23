@@ -62,13 +62,14 @@ export default async function run({ inputLines }) {
 
   makeNodeMap();
 
+  const startNode = getKey(start);
+  const endNode = getKey(end);
   const paths = [];
   paths.push({
     length: 0,
-    path: [getKey(start)],
-    point: getKey(start),
+    remaining: Object.keys(nodeMap).filter((x) => x !== startNode),
+    point: startNode,
   });
-  const endNode = getKey(end);
 
   let length = 0;
 
@@ -76,18 +77,18 @@ export default async function run({ inputLines }) {
     const next = paths.pop();
     if (next.point === endNode) {
       length = Math.max(length, next.length);
+      continue;
     }
     const options = nodeMap[next.point].paths;
     for (let i = 0; i < options.length; i++) {
       const option = options[i];
-      const length = next.length + option[0];
       const point = option[1];
-      if (next.path.includes(point)) {
+      if (!next.remaining.includes(point)) {
         continue;
       }
       paths.push({
-        length,
-        path: [...next.path, point],
+        length: next.length + option[0],
+        remaining: next.remaining.filter((x) => x !== point),
         point,
       });
     }
