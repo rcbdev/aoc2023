@@ -25,10 +25,7 @@ export default async function run({ inputLines }) {
   const getKey = (arr) => arr.join("-");
 
   const makeNodeMap = (point = start) => {
-    const node = {
-      paths: [],
-      longest: 0,
-    };
+    const node = [];
 
     const getNext = (point, lastPoint) =>
       upDownLeftRight(point)
@@ -47,12 +44,12 @@ export default async function run({ inputLines }) {
         lastPoint = thisPoint;
         length++;
       }
-      node.paths.push([length, getKey(lastPoint)]);
+      node.push({ length, point: getKey(lastPoint) });
     }
     nodeMap[getKey(point)] = node;
 
-    const newNodes = node.paths
-      .map((path) => path[1])
+    const newNodes = node
+      .map((path) => path.point)
       .filter((key) => !nodeMap[key]);
 
     newNodes.forEach((newNode) =>
@@ -89,15 +86,15 @@ export default async function run({ inputLines }) {
       length = Math.max(length, next.length);
       continue;
     }
-    const options = nodeMap[next.point].paths;
+    const options = nodeMap[next.point];
     for (let i = 0; i < options.length; i++) {
       const option = options[i];
-      const point = option[1];
+      const point = option.point;
       if (hasVisited(point, next.visited)) {
         continue;
       }
       paths.push({
-        length: next.length + option[0],
+        length: next.length + option.length,
         visited: markVisited(point, next.visited),
         point,
       });
