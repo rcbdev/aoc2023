@@ -64,10 +64,20 @@ export default async function run({ inputLines }) {
 
   const startNode = getKey(start);
   const endNode = getKey(end);
+  const nodeKeys = Object.keys(nodeMap);
+  const nodeBitmaps = Object.fromEntries(
+    nodeKeys.map((k, i) => [k, BigInt(Math.pow(2, i))])
+  );
+  const hasVisited = (node, visited) => {
+    return (nodeBitmaps[node] & visited) !== 0n;
+  };
+  const markVisited = (node, visited) => {
+    return visited | nodeBitmaps[node];
+  };
   const paths = [];
   paths.push({
     length: 0,
-    remaining: Object.keys(nodeMap).filter((x) => x !== startNode),
+    visited: nodeBitmaps[startNode],
     point: startNode,
   });
 
@@ -83,12 +93,12 @@ export default async function run({ inputLines }) {
     for (let i = 0; i < options.length; i++) {
       const option = options[i];
       const point = option[1];
-      if (!next.remaining.includes(point)) {
+      if (hasVisited(point, next.visited)) {
         continue;
       }
       paths.push({
         length: next.length + option[0],
-        remaining: next.remaining.filter((x) => x !== point),
+        visited: markVisited(point, next.visited),
         point,
       });
     }
